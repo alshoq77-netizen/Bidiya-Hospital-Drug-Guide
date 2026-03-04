@@ -340,3 +340,46 @@ footer {
   color:#fff;
   margin-top:20px;
 }
+/* ===== Admin Tabs ===== */
+.admin-tabs{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin: 6px 0 14px;
+}
+.tab-btn{
+  border:none;
+  border-radius:12px;
+  padding:10px 14px;
+  cursor:pointer;
+  background:#e8f3ff;
+  color:#0d47a1;
+  font-size:0.98em;
+}
+.tab-btn.active{
+  background:#2196f3;
+  color:#fff;
+}
+.admin-tab-panels{ width:100%; }
+
+.tab-panel{ display:none; }
+.tab-panel.active{ display:block; }
+
+/* اختيار قسم موجود/جديد */
+.choice-row{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin: 6px 0 8px;
+}
+.choice{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#f4f9ff;
+  border:1px solid rgba(25,118,210,0.15);
+  padding:8px 10px;
+  border-radius:12px;
+}
