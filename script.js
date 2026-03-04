@@ -1209,7 +1209,6 @@ searchInput.addEventListener("input", ()=>{
     renderSection("💉 الحقن", injections);
     return;
   }
-
   // باقي الأقسام عادي
   const result = data.medicines.filter(m =>
     m.categoryId === currentCategoryId &&
