@@ -550,6 +550,30 @@ const adminLoginMsg = document.getElementById("adminLoginMsg");
 
 const adminPanelModal = document.getElementById("adminPanelModal");
 const adminPanelClose = document.getElementById("adminPanelClose");
+// Tabs
+const tabBtns = Array.from(document.querySelectorAll(".tab-btn"));
+const tabPanels = Array.from(document.querySelectorAll(".tab-panel"));
+
+// Inline new category when adding medicine
+const existingCatBox = document.getElementById("existingCatBox");
+const newCatBox = document.getElementById("newCatBox");
+const inlineCatName = document.getElementById("inlineCatName");
+const inlineCatIcon = document.getElementById("inlineCatIcon");
+const catModeRadios = Array.from(document.querySelectorAll('input[name="catMode"]'));
+function openAdminTab(tabId){
+  tabBtns.forEach(b => b.classList.toggle("active", b.dataset.tab === tabId));
+  tabPanels.forEach(p => p.classList.toggle("active", p.id === tabId));
+}
+
+tabBtns.forEach(btn=>{
+  btn.addEventListener("click", ()=> openAdminTab(btn.dataset.tab));
+}); 
+function syncCatModeUI(){
+  const mode = (catModeRadios.find(r => r.checked)?.value) || "existing";
+  existingCatBox.style.display = (mode === "existing") ? "block" : "none";
+  newCatBox.style.display = (mode === "new") ? "block" : "none";
+}
+catModeRadios.forEach(r => r.addEventListener("change", syncCatModeUI));
 
 const newCatName = document.getElementById("newCatName");
 const newCatIcon = document.getElementById("newCatIcon");
@@ -709,10 +733,17 @@ function fillCategorySelect(){
 
 adminPanelBtn.addEventListener("click", ()=>{
   if (!isAdmin()) return;
+
   catMsg.textContent = "";
   medMsg.textContent = "";
   dataMsg.textContent = "";
+
   fillCategorySelect();
+  syncCatModeUI();
+
+  // افتحي تبويب إضافة الدواء افتراضيًا
+  openAdminTab("tab-meds");
+
   adminPanelModal.style.display = "flex";
 });
 adminPanelClose.addEventListener("click", ()=> adminPanelModal.style.display = "none");
@@ -744,7 +775,32 @@ addCategoryBtn.addEventListener("click", ()=>{
 addMedicineBtn.addEventListener("click", ()=>{
   if (!isAdmin()) return;
 
-  const categoryId = medCategory.value;
+  const mode = (catModeRadios.find(r => r.checked)?.value) || "existing";
+
+  // 1) تحديد القسم
+  let categoryId = medCategory.value;
+
+  // إذا المستخدم اختار "قسم جديد"
+  if (mode === "new"){
+    const name = inlineCatName.value.trim();
+    const icon = inlineCatIcon.value.trim();
+
+    if (!name){
+      medMsg.textContent = "❗ اكتب اسم القسم الجديد أولاً";
+      return;
+    }
+
+    const id = slugify(name);
+
+    // إذا غير موجود: أضفه
+    if (!data.categories.some(c => c.id === id)){
+      data.categories.push({ id, name, icon });
+    }
+
+    categoryId = id;
+  }
+
+  // 2) بيانات الدواء
   const name = medName.value.trim();
   const img = medImg.value.trim();
   const uses = medUses.value.trim();
@@ -759,18 +815,28 @@ addMedicineBtn.addEventListener("click", ()=>{
   data.medicines.unshift({ categoryId, name, img, uses, short, details: details || "—" });
   saveData(data);
 
+  // تنظيف الحقول
   medName.value = "";
   medImg.value = "";
   medUses.value = "";
   medShort.value = "";
   medDetails.value = "";
 
+  // تنظيف حقول القسم الجديد إذا استخدمها
+  if (mode === "new"){
+    inlineCatName.value = "";
+    inlineCatIcon.value = "";
+  }
+
   medMsg.textContent = "✅ تم إضافة الدواء";
 
-  // إذا في نفس القسم المفتوح اعرضه مباشرة
-  showCategory(currentCategoryId);
-});
+  // تحديث واجهة الأقسام + القائمة المنسدلة
+  renderCategories();
+  fillCategorySelect();
 
+  // افتح القسم الذي أُضيف إليه الدواء
+  showCategory(categoryId);
+});
 // Export/Import/Reset
 exportBtn.addEventListener("click", ()=>{
   if (!isAdmin()) return;
