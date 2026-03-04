@@ -1085,12 +1085,54 @@ function renderMedicines(list){
     gallery.appendChild(card);
   });
 }
+function renderSection(title, meds){
+  const section = document.createElement("div");
+  section.className = "section-block";
+  section.innerHTML = `<h3 class="sub-title">${title}</h3>`;
+  gallery.appendChild(section);
 
+  if (!meds.length){
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "لا توجد أدوية في هذا القسم حالياً.";
+    gallery.appendChild(empty);
+    return;
+  }
+
+  meds.forEach(med=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img src="${med.img}" alt="${med.name}">
+      <h4>${med.name}</h4>
+      <p>${med.uses || ""}</p>
+    `;
+    card.onclick = ()=> openModal(med);
+    gallery.appendChild(card);
+  });
+}
+
+// ✅ عرض السكري كقسم رئيسي يحتوي (الحبوب + الحقن)
+function renderDiabetesCombined(){
+  gallery.innerHTML = "";
+
+  const tablets = data.medicines.filter(m => m.categoryId === "tablets");
+  const injections = data.medicines.filter(m => m.categoryId === "injections");
+
+  renderSection("💊 الحبوب", tablets);
+  renderSection("💉 الحقن", injections);
+}
 function showCategory(categoryId){
   currentCategoryId = categoryId;
   searchInput.value = "";
   setCategoryTitle();
   renderCategories();
+
+  // ✅ إذا ضغط على "أدوية السكري" اعرض (الحبوب + الحقن) داخلها
+  if (categoryId === "diabetes"){
+    renderDiabetesCombined();
+    return;
+  }
 
   const list = data.medicines.filter(m => m.categoryId === categoryId);
   renderMedicines(list);
@@ -1148,6 +1190,27 @@ window.closeMore = closeMore;
 // =========================
 searchInput.addEventListener("input", ()=>{
   const term = searchInput.value.toLowerCase().trim();
+
+  // ✅ بحث السكري داخل (الحبوب + الحقن)
+  if (currentCategoryId === "diabetes"){
+    const combined = data.medicines.filter(m =>
+      (m.categoryId === "tablets" || m.categoryId === "injections") &&
+      (
+        (m.name || "").toLowerCase().includes(term) ||
+        (m.uses || "").toLowerCase().includes(term)
+      )
+    );
+
+    // نعيد العرض بنفس فكرة الأقسام
+    gallery.innerHTML = "";
+    const tablets = combined.filter(m => m.categoryId === "tablets");
+    const injections = combined.filter(m => m.categoryId === "injections");
+    renderSection("💊 الحبوب", tablets);
+    renderSection("💉 الحقن", injections);
+    return;
+  }
+
+  // باقي الأقسام عادي
   const result = data.medicines.filter(m =>
     m.categoryId === currentCategoryId &&
     (
