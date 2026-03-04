@@ -67,63 +67,95 @@
 </div>
 
 <!-- لوحة التحكم -->
-<div id="adminPanelModal" class="admin-modal">
-  <div class="admin-modal-content wide">
-    <span class="close" id="adminPanelClose">&times;</span>
-    <h3>لوحة التحكم</h3>
+<!-- ===== Tabs Header ===== -->
+<div class="admin-tabs">
+  <button class="tab-btn active" data-tab="tab-meds">➕ إضافة دواء</button>
+  <button class="tab-btn" data-tab="tab-cats">📁 إضافة قسم</button>
+  <button class="tab-btn" data-tab="tab-data">🧹 إدارة البيانات</button>
+</div>
 
-    <div class="admin-grid">
-      <!-- إضافة قسم -->
-      <div class="admin-card">
-        <h4>➕ إضافة قسم جديد</h4>
-        <label>اسم القسم</label>
-        <input type="text" id="newCatName" placeholder="مثال: أدوية الربو" />
-        <label>أيقونة (اختياري)</label>
-        <input type="text" id="newCatIcon" placeholder="مثال: 🫁 أو ❤️" />
-        <button id="addCategoryBtn" class="primary">إضافة القسم</button>
-        <div id="catMsg" class="msg"></div>
+<!-- ===== Tabs Content ===== -->
+<div class="admin-tab-panels">
+
+  <!-- TAB: Add Medicine -->
+  <div class="tab-panel active" id="tab-meds">
+    <div class="admin-card">
+      <h4>➕ إضافة دواء جديد</h4>
+
+      <label>القسم</label>
+
+      <!-- اختيار قسم موجود أو إنشاء جديد -->
+      <div class="choice-row">
+        <label class="choice">
+          <input type="radio" name="catMode" value="existing" checked>
+          قسم موجود
+        </label>
+        <label class="choice">
+          <input type="radio" name="catMode" value="new">
+          قسم جديد
+        </label>
       </div>
 
-      <!-- إضافة دواء -->
-      <div class="admin-card">
-        <h4>➕ إضافة دواء جديد</h4>
-
-        <label>اختر القسم</label>
+      <!-- موجود -->
+      <div id="existingCatBox">
         <select id="medCategory"></select>
-
-        <label>اسم الدواء</label>
-        <input type="text" id="medName" placeholder="مثال: Salbutamol Inhaler" />
-
-        <label>رابط الصورة</label>
-        <input type="url" id="medImg" placeholder="https://..." />
-
-        <label>وصف مختصر (يظهر على البطاقة)</label>
-        <input type="text" id="medUses" placeholder="مثال: موسع للشعب الهوائية..." />
-
-        <label>الوصف القصير (يظهر داخل النافذة الأولى)</label>
-        <textarea id="medShort" rows="3" placeholder="سطرين أو نقاط مختصرة..."></textarea>
-
-        <label>التفاصيل الكاملة (HTML مسموح)</label>
-        <textarea id="medDetails" rows="8" placeholder="مثال: <h4>🕒 طريقة الاستخدام</h4> ..."></textarea>
-
-        <button id="addMedicineBtn" class="primary">إضافة الدواء</button>
-        <div id="medMsg" class="msg"></div>
       </div>
 
-      <!-- إدارة سريعة -->
-      <div class="admin-card full">
-        <h4>🧹 إدارة البيانات</h4>
-        <div class="row">
-          <button id="exportBtn">⬇️ تصدير JSON</button>
-          <button id="importBtn">⬆️ استيراد JSON</button>
-          <button id="resetBtn" class="danger">♻️ إعادة ضبط</button>
-        </div>
-        <textarea id="jsonArea" rows="8" placeholder="هنا سيظهر JSON للتصدير أو ضع JSON للاستيراد"></textarea>
-        <div id="dataMsg" class="msg"></div>
+      <!-- جديد -->
+      <div id="newCatBox" style="display:none;">
+        <input type="text" id="inlineCatName" placeholder="اسم القسم الجديد (مثال: أدوية الربو)" />
+        <input type="text" id="inlineCatIcon" placeholder="أيقونة (اختياري) مثال: 🫁 أو ❤️" />
       </div>
+
+      <label>اسم الدواء</label>
+      <input type="text" id="medName" placeholder="مثال: Salbutamol Inhaler" />
+
+      <label>رابط الصورة</label>
+      <input type="url" id="medImg" placeholder="https://..." />
+
+      <label>وصف مختصر (يظهر على البطاقة)</label>
+      <input type="text" id="medUses" placeholder="مثال: موسع للشعب الهوائية..." />
+
+      <label>الوصف القصير (يظهر داخل النافذة الأولى)</label>
+      <textarea id="medShort" rows="3" placeholder="سطرين أو نقاط مختصرة..."></textarea>
+
+      <label>التفاصيل الكاملة (HTML مسموح)</label>
+      <textarea id="medDetails" rows="8" placeholder="مثال: <h4>🕒 طريقة الاستخدام</h4> ..."></textarea>
+
+      <button id="addMedicineBtn" class="primary">إضافة الدواء</button>
+      <div id="medMsg" class="msg"></div>
     </div>
   </div>
+
+  <!-- TAB: Add Category -->
+  <div class="tab-panel" id="tab-cats">
+    <div class="admin-card">
+      <h4>➕ إضافة قسم جديد</h4>
+      <label>اسم القسم</label>
+      <input type="text" id="newCatName" placeholder="مثال: أدوية القلب" />
+      <label>أيقونة (اختياري)</label>
+      <input type="text" id="newCatIcon" placeholder="مثال: ❤️" />
+      <button id="addCategoryBtn" class="primary">إضافة القسم</button>
+      <div id="catMsg" class="msg"></div>
+    </div>
+  </div>
+
+  <!-- TAB: Data -->
+  <div class="tab-panel" id="tab-data">
+    <div class="admin-card">
+      <h4>🧹 إدارة البيانات</h4>
+      <div class="row">
+        <button id="exportBtn">⬇️ تصدير JSON</button>
+        <button id="importBtn">⬆️ استيراد JSON</button>
+        <button id="resetBtn" class="danger">♻️ إعادة ضبط</button>
+      </div>
+      <textarea id="jsonArea" rows="10" placeholder="هنا سيظهر JSON للتصدير أو ضع JSON للاستيراد"></textarea>
+      <div id="dataMsg" class="msg"></div>
+    </div>
+  </div>
+
 </div>
+
 
 <footer>By: Jouharah.IT & Sara.Pharmasist</footer>
 
