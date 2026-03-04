@@ -953,7 +953,7 @@ const newCatName = document.getElementById("newCatName");
 const newCatIcon = document.getElementById("newCatIcon");
 const addCategoryBtn = document.getElementById("addCategoryBtn");
 const catMsg = document.getElementById("catMsg");
-
+const catsList = document.getElementById("catsList");
 // Add medicine tab
 const existingCatBox = document.getElementById("existingCatBox");
 const newCatBox = document.getElementById("newCatBox");
@@ -1325,19 +1325,110 @@ function fillEditCategorySelect(){
     editMedCategory.appendChild(opt);
   });
 }
+const CORE_CATS = new Set(["diabetes","tablets","injections"]);
 
+function renderCategoryManager(){
+  if (!catsList) return;
+  catsList.innerHTML = "";
+
+  data.categories.forEach(cat=>{
+    const row = document.createElement("div");
+    row.className = "cat-row";
+
+    // قائمة النقل (كل الأقسام ما عدا القسم الحالي)
+    const moveOptions = data.categories
+      .filter(c => c.id !== cat.id)
+      .map(c => `<option value="${c.id}">${c.icon ? c.icon+" " : ""}${c.name}</option>`)
+      .join("");
+
+    row.innerHTML = `
+      <div class="left">
+        <input class="cat-name" type="text" value="${cat.name || ""}" placeholder="اسم القسم">
+        <input class="cat-icon" type="text" value="${cat.icon || ""}" placeholder="أيقونة (اختياري)">
+      </div>
+
+      <div class="cat-actions">
+        <button class="save" type="button">💾 حفظ</button>
+        <button class="del" type="button" ${CORE_CATS.has(cat.id) ? "disabled" : ""}>🗑️ حذف</button>
+      </div>
+
+      <div class="cat-move">
+        <span>عند الحذف انقل الأدوية إلى:</span>
+        <select class="move-to">
+          ${moveOptions || `<option value="diabetes">🩸 أدوية السكري والإنسولين</option>`}
+        </select>
+      </div>
+    `;
+
+    // حفظ تعديل الاسم/الأيقونة
+    row.querySelector(".save").addEventListener("click", ()=>{
+      if (!isAdmin()) return;
+
+      const newName = row.querySelector(".cat-name").value.trim();
+      const newIcon = row.querySelector(".cat-icon").value.trim();
+
+      if (!newName){
+        alert("اكتب اسم القسم");
+        return;
+      }
+
+      cat.name = newName;
+      cat.icon = newIcon;
+
+      saveData(data);
+      renderCategories();
+      fillCategorySelect();
+      fillEditCategorySelect();
+      setCategoryTitle();
+      // لا نغير الـ id عشان ما نخرب الأدوية المرتبطة
+      alert("✅ تم حفظ تعديل القسم");
+    });
+
+    // حذف القسم (مع نقل أدوية القسم)
+    row.querySelector(".del").addEventListener("click", ()=>{
+      if (!isAdmin()) return;
+      if (CORE_CATS.has(cat.id)) return;
+
+      const target = row.querySelector(".move-to").value || "diabetes";
+      const ok = confirm(`حذف القسم "${cat.name}" ؟ سيتم نقل أدويته إلى القسم المختار.`);
+      if (!ok) return;
+
+      // نقل أدوية هذا القسم لقسم آخر
+      data.medicines.forEach(m=>{
+        if (m.categoryId === cat.id) m.categoryId = target;
+      });
+
+      // حذف القسم من القائمة
+      data.categories = data.categories.filter(c => c.id !== cat.id);
+
+      saveData(data);
+      renderCategories();
+      fillCategorySelect();
+      fillEditCategorySelect();
+
+      // إذا كان المستخدم داخل القسم المحذوف، انتقل للقسم الهدف
+      if (currentCategoryId === cat.id) {
+        showCategory(target);
+      } else {
+        showCategory(currentCategoryId);
+      }
+
+      renderCategoryManager();
+      alert("✅ تم حذف القسم ونقل الأدوية");
+    });
+
+    catsList.appendChild(row);
+  });
+}
 adminPanelBtn.addEventListener("click", ()=>{
-  if (!isAdmin()) return;
-
-  catMsg.textContent = "";
-  medMsg.textContent = "";
-  dataMsg.textContent = "";
-
+  if (!isAdmin()){
+    alert("الدخول للأدمن فقط.");
+    return;
+  }
+  adminModal.style.display = "flex";
   fillCategorySelect();
-  syncCatModeUI();
-  openAdminTab("tab-meds");
 
-  adminPanelModal.style.display = "flex";
+  renderCategoryManager();   // أضيفي هذا السطر
 });
 adminPanelClose.addEventListener("click", ()=> adminPanelModal.style.display = "none");
 
@@ -1364,6 +1455,8 @@ addCategoryBtn.addEventListener("click", ()=>{
   newCatIcon.value = "";
   catMsg.textContent = "✅ تم إضافة القسم";
 
+  renderCategoryManager();
+  
   renderCategories();
   fillCategorySelect();
 });
