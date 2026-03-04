@@ -212,15 +212,24 @@ header {
 }
 
 /* ===== مودالات الإدارة ===== */
+/* ===== مودالات الإدارة (FIX: قابلة للتمرير ومناسبة للشاشة) ===== */
 .admin-modal{
   display:none;
   position:fixed;
   inset:0;
   background:rgba(0,0,0,0.75);
   z-index:120;
+
+  /* ✅ مهم: خلي النافذة تبدأ من الأعلى مع مساحة */
+  display:flex;
   justify-content:center;
-  align-items:center;
+  align-items:flex-start;
+  padding:16px;
+
+  /* ✅ يسمح بالتمرير لو المحتوى طويل */
+  overflow:auto;
 }
+
 .admin-modal-content{
   background:#fff;
   border-radius:16px;
@@ -229,12 +238,28 @@ header {
   padding:22px 18px;
   position:relative;
   text-align:right;
+
+  /* ✅ مهم: لا تتجاوز ارتفاع الشاشة */
+  max-height: calc(100vh - 32px);
+  overflow-y:auto;
+
+  /* ✅ سلاسة التمرير على الجوال */
+  -webkit-overflow-scrolling: touch;
 }
-.admin-modal-content.wide{ max-width:980px; }
-.admin-modal-content h3{
-  margin:0 0 10px;
-  color:#1976d2;
-  text-align:center;
+
+.admin-modal-content.wide{
+  max-width:980px;
+}
+
+/* ✅ خلي زر الإغلاق ثابت وواضح أثناء التمرير */
+.admin-modal-content .close{
+  position: sticky;
+  top: 0;
+  float: right;
+  background: #fff;
+  padding: 6px 10px;
+  border-radius: 10px;
+  z-index: 5;
 }
 .hint{ margin:0 0 14px; color:#666; text-align:center; }
 
