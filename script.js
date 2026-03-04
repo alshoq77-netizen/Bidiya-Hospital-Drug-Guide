@@ -1057,18 +1057,20 @@ function renderCategories(){
         const to = Number(card.dataset.index);
         if (Number.isNaN(from) || Number.isNaN(to) || from === to) return;
 
-        // نرتّب فقط الأقسام الظاهرة
-        const visible = [...visibleCategories];
-        const [moved] = visible.splice(from, 1);
-        visible.splice(to, 0, moved);
+        // نرتّب فقط الأقسام الظاهرة (بدون الحبوب/الحقن)
+        const orderedVisible = [...visibleCategories];
+        const [moved] = orderedVisible.splice(from, 1);
+        orderedVisible.splice(to, 0, moved);
 
-        // نرجع نركّبها داخل data.categories بدون لمس الحبوب/الحقن (مخفية)
+        // ثم نعيد بناء القائمة كاملة مع إبقاء (الحبوب/الحقن) كما هي
         const hidden = data.categories.filter(c => c.id === "tablets" || c.id === "injections");
-        data.categories = [...visible, ...hidden];
+        data.categories = [...orderedVisible, ...hidden];
 
         saveData(data);
         renderCategories();
         fillCategorySelect();
+        fillEditCategorySelect();
+        renderCategoryManager();
       });
     }
 
