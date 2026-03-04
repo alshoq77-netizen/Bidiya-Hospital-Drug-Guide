@@ -1549,6 +1549,7 @@ importBtn.addEventListener("click", ()=>{
     renderCategories();
     fillCategorySelect();
     showCategory(data.categories[0]?.id || "diabetes");
+    renderCategoryManager();
     dataMsg.textContent = "✅ تم الاستيراد بنجاح";
   } catch {
     dataMsg.textContent = "❌ JSON غير صالح";
@@ -1562,6 +1563,7 @@ resetBtn.addEventListener("click", ()=>{
   renderCategories();
   fillCategorySelect();
   showCategory("diabetes");
+  renderCategoryManager();
   dataMsg.textContent = "✅ تم إعادة الضبط";
 });
 
