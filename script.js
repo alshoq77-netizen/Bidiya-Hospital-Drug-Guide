@@ -1,25 +1,20 @@
 // =========================
-// Admin + Categories Cards
-// Password (front-end only): radmin123
+// Bidayh Hospital - Drug Guide
+// Admin password (front-end only): radmin123
 // =========================
 
 const ADMIN_PASSWORD = "radmin123";
-const LS_KEY = "bidhya_meds_v2";     // نسخة جديدة
+const LS_KEY = "bidhya_meds_v3"; // إصدار جديد للتخزين
 const LS_ADMIN = "bidhya_admin_logged_in";
 
-// =========================
-// الأقسام الافتراضية
-// =========================
+// أقسام افتراضية
 const defaultCategories = [
   { id:"diabetes",  name:"أدوية السكري والإنسولين", icon:"🩸" },
   { id:"tablets",   name:"الحبوب",                 icon:"💊" },
   { id:"injections",name:"الحقن",                  icon:"💉" }
 ];
 
-// =========================
-// ✅ تحويل تلقائي: type -> categoryId
-// (يعني قائمتك تظل كما هي فيها type)
-// =========================
+// ✅ تحويل: type -> categoryId (يعني قائمتك تظل كما هي)
 function normalizeMeds(meds){
   return meds.map(m => {
     const cat = m.categoryId || m.type || "diabetes";
@@ -27,12 +22,44 @@ function normalizeMeds(meds){
   });
 }
 
-// =========================
-// ✅✅ الصق قائمتك الكبيرة هنا (بدون تعديل)
-// =========================
+// ✅ إنشاء ID ثابت لكل دواء (مهم للتعديل/الحذف)
+function ensureMedIds(meds){
+  return meds.map(m => {
+    if (m.id) return m;
+    const id = (crypto?.randomUUID ? crypto.randomUUID() : ("m_" + Math.random().toString(16).slice(2)));
+    return { ...m, id };
+  });
+}
 
-  const medicines = [
-  { name:"METFORMIN 500 mg", img:"https://i.ibb.co/Gf0NsZJN/glucophage.jpg", type:"tablets", uses:"لعلاج السكري من النوع الثاني ",
+// ✅ قراءة صورة من الجهاز إلى DataURL
+function readImageAsDataURL(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(reader.result);
+    reader.onerror = ()=> reject(new Error("read failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function saveData(data){ localStorage.setItem(LS_KEY, JSON.stringify(data)); }
+function isAdmin(){ return sessionStorage.getItem(LS_ADMIN) === "1"; }
+
+function slugify(str) {
+  return (str || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40) || ("cat-" + Math.random().toString(16).slice(2, 8));
+}
+
+/* ===========================================================
+   ✅✅✅ الصقي قائمتك الكبيرة هنا فقط (بدون تعديل)
+   مثال: { name:"...", img:"...", type:"tablets", uses:"...", short:"...", details:`...` }
+=========================================================== */
+const medicines = [
+ { name:"METFORMIN 500 mg", img:"https://i.ibb.co/Gf0NsZJN/glucophage.jpg", type:"tablets", uses:"لعلاج السكري من النوع الثاني ",
   short: "يوخذ بعد الأكل-الجرعة القصوى: 2000–2550 mg في اليوم", 
    details:`💊 METFORMIN 500MG
 <h4> 🕒 طريقة الاستخدام/ </h4>
@@ -479,15 +506,386 @@ function normalizeMeds(meds){
 	يُبعد عن الحرارة المباشرة وأشعة الشمس.
 	لا يُجمَّد أبدًا..</p>
 `},
+  { name:"Actrapid HM Penfill", img:"https://i.ibb.co/qL7CKdYp/actrapid.jpg",
+   type:"injections", 
+   uses:"إنسولين سريع",
+   short:"يُحقن قبل الوجبة بـ 30 دقيقة." ,
+   details:`💉 ACTRAPID
+   <h4> 🕒 ألية العمل </h4>
+<p>
+1.	يساعد على دخول الجلوكوز إلى الخلايا وخفض مستوى السكر في الدم.
+2.	يقلل إنتاج الجلوكوز من الكبد.
+3.	يغطي سكر الوجبة لأنه سريع المفعول نسبيًا مقارنة بالأنواع الأخرى.
+. <p>
+
+<h4> 🕒 💊 الاستخدامات الشائعة </h4>
+<p>  
+1.	السكري من النوع الأول (Type 1).
+2.	السكري من النوع الثاني (Type 2) عند عدم كفاية الأقراص.
+3.	تصحيح ارتفاع السكر (Correction insulin).
+4.	يستخدم في طوارئ ارتفاع السكر أو الحماض الكيتوني (DKA) عبر الوريد بجرعات محددة.
+
+	عادةً يُعطى 2–3 مرات يوميًا قبل الوجبات الرئيسية.
+	يبدأ مفعوله خلال 30 دقيقة، ويصل لذروة خلال 2–4 ساعات، ويستمر 6–8 ساعات.
+..</p>
+      <h4>⚠️ الآثار الجانبية الشائعة </h4>
+<p> 
+	الشائعة:
+1.	هبوط سكر الدم (Hypoglycemia)
+2.	زيادة الوزن
+3.	ألم أو احمرار في موضع الحقن
+
+	الأقل شيوعًا:
+1.	تورّم خفيف
+2.	تكتلات دهنية (Lipodystrophy)
+3.	حساسية نادرة جدًا للإنسولين
+..</p> 
+
+      <h4>️⚕️ تحذيرات </h4>
+<p> 
+	تغيير مواقع الحقن باستمرار لتجنب التكتلات.
+	الحذر مع مرضى الكلى أو الكبد لضبط الجرعة.
+	الانتباه لأعراض هبوط السكر:
+رجفة – عرق – جوع – دوخة – نبض سريع
+	يجب ضبط الجرعات عند: المرض/ النشاط البدني العالي/ تغيّر نمط الأكل
+
+	عدم استخدام الإنسولين إذا تغيّر لونه أو أصبح عكرًا (Regular يجب أن يكون صافياً شفافاً).
+.</p>
+      <h4> طريقة استخدام الإنسولين </h4>
+<p>
+	التحضير قبل الحقن
+1.اغسل يديك جيدًا.
+2.تأكد أن الإنسولين ليس منتهي الصلاحية.
+3.تأكد من شكله
+
+	اختيار مكان الحقن
+أفضل الأماكن: البطن (الأسرع امتصاصًا) / الفخذين / الذراع العلوي / الأرداف.
+
+	ملاحظة مهمة:
+بدّل  مكان الحقن كل مرة لتجنب تكتل الدهون تحت الجلد (Lipodystrophy).
+
+	خطوات الحقن باستخدام القلم (Insulin Pen)
+
+1. أزيل الغطاء.
+2. ركّب الإبرة الجديدة.
+3. قم بعمل priming:
+4.اضغط وحدتين للتأكد من خروج نقطة من الإنسولين.
+5. اضبط الجرعة المطلوبة باستخدام القرص.
+6. امسك الجلد بيدك (إن كان الدهون قليلة).
+7. أدخل الإبرة بزاوية 90° (أو 45° في الأشخاص النحيفين).
+8. اضغط زر الجرعة بالكامل.
+9. انتظر 10 ثوانٍ قبل سحب الإبرة لضمان دخول الجرعة كاملة.
+10. تخلص من الإبرة في علبة التخلص من الإبر (Sharps container).
+	بعد الحقن
+لا تقوم بتدليك مكان الحقن..</p>
+
+      <h4>️ 📦 التخزين </h4>
+<p>
+	قبل الفتح:
+يُحفظ في الثلاجة 2–8°C، بعيدًا عن التجميد.
+	بعد الفتح (قلم/قارورة):
+يُحفظ في درجة الغرفة لمدة 28–30 يومًا كحد أقصى.
+	يُبعد عن الحرارة المباشرة وأشعة الشمس.
+	لا يُجمَّد أبدًا..</p>
+   `},
+  { name:"Insulatard Penfill", img:"https://i.ibb.co/3y6zCYB0/insulatard.jpg", type:"injections", 
+   uses:"إنسولين متوسط", 
+   short:"إنسولين متوسط المفعول – يحقن عادة مرة أو مرتين يوميًا." ,
+   details:`💉 NPH Insulin (Intermediate-acting Insulin)
+   <h4> 🕒 ألية العمل </h4>
+<p>
+1.	يحتوي على protamine الذي يبطّئ امتصاص الإنسولين.
+2.	يعطي مفعولًا متوسطًا لتوفير إنسولين قاعدي مستمر لتغطية سكر الدم خلال اليوم والليل.
+	يبدأ العمل: 1–2 ساعة
+الذروة: 4–8 ساعات
+المدة: 12–18 ساعة
+. <p>
+<h4> 🕒 💊 الاستخدامات الشائعة </h4>
+<p>  
+1.	علاج داء السكري النوع الأول.
+2.	علاج النوع الثاني عند عدم كفاية الأقراص.
+3.	يستخدم عادة كإنسولين قاعدي (Basal).
+4.	يُستخدم أحيانًا في الحمل إذا احتاجت المريضة إنسولين طويل المفعول.
+...</p>
+      <h4>⚠️ الآثار الجانبية الشائعة </h4>
+<p> 
+	شائعة:
+1.	انخفاض السكر (Hypoglycemia) خصوصًا في وقت الذروة.
+2.	زيادة الوزن.
+3.	احمرار أو ألم في موقع الحقن.
+4.	نوبات جوع ورعشة بسبب الانخفاض.
+
+	نادرة:
+1.	حساسية للإنسولين أو البروتامين.
+2.	تورم الأطراف.
+3.	تغيرات بسيطة في البصر عند بدء العلاج.
+..</p> 
+      <h4>️⚕️ تحذيرات </h4>
+<p> 
+	الحذر الشديد عند: كبار السن / مرضى الكلى أو الكبد / من لديهم خطر هبوط السكر.
+1.	خطر انخفاض السكر أكبر من اللانتوس (Glargine) بسبب الذروة.
+2.	يجب تغيير مواقع الحقن لتجنب تكتلات الدهون.
+3.	الذين لديهم نمط أكل غير منتظم
+4.	لا يستخدم لعلاج الحماض الكيتوني (DKA).
+.</p>
+      <h4> طريقة استخدام الإنسولين </h4>
+<p>
+	التحضير قبل الحقن
+1.	اغسل يديك جيدًا.
+2.	تأكد أن الإنسولين ليس منتهي الصلاحية.
+3.	تأكد من شكله
+	اختيار مكان الحقن
+أفضل الأماكن: البطن (الأسرع امتصاصًا) / الفخذين / الذراع العلوي / الأرداف.
+	ملاحظة مهمة:
+بدّل  مكان الحقن كل مرة لتجنب تكتل الدهون تحت الجلد (Lipodystrophy).
+	خطوات الحقن باستخدام القلم (Insulin Pen)
+1. أزيل الغطاء.
+2. ركّب الإبرة الجديدة.
+3. قم بعمل priming:
+4.اضغط وحدتين للتأكد من خروج نقطة من الإنسولين.
+5. اضبط الجرعة المطلوبة باستخدام القرص.
+6. امسك الجلد بيدك (إن كان الدهون قليلة).
+7. أدخل الإبرة بزاوية 90° (أو 45° في الأشخاص النحيفين).
+8. اضغط زر الجرعة بالكامل.
+9. انتظر 10 ثوانٍ قبل سحب الإبرة لضمان دخول الجرعة كاملة.
+10. تخلص من الإبرة في علبة التخلص من الإبر (Sharps container).
+	بعد الحقن
+لا تقوم بتدليك مكان الحقن..</p>
+      <h4>️ 📦 التخزين </h4>
+<p>
+	قبل الفتح:
+يُحفظ في الثلاجة 2–8°C، بعيدًا عن التجميد.
+	بعد الفتح (قلم/قارورة):
+يُحفظ في درجة الغرفة لمدة 28–30 يومًا كحد أقصى.
+	يُبعد عن الحرارة المباشرة وأشعة الشمس.
+	لا يُجمَّد أبدًا.
+	يُرج جيدًا قبل الاستخدام لأنه معلق cloudy وليس صافياً كالأنسولينات الأخرى.
+	.</p>
+      <h4>️ مميزات NPH </h4>
+1.	اقتصادي وسعره منخفض.
+2.	مناسب للحوامل.
+	      <h4>️ ❌ عيوبه</h4>
+1.	له ذروة واضحة→ خطر الانخفاض أكبر.
+2.	يحتاج رج قبل الاستخدام.
+3.	مفعوله غير ثابت مقارنة بالسواء الطويلة (Glargine/Detemir)
+   `},
+  
+  { name:"Regular Insulin/ Insulin Human Regular", img:"https://i.ibb.co/Cp94pSYn/Whats-App-Image-2025-11-23-at-12-06-06-PM.png", 
+   type:"injections", 
+   uses:"إنسولين متوسط", 
+   short:"يُحقن قبل الوجبة بـ 30 دقيقة." ,
+   details:`💉 Regular Insulin/ Insulin Human Regular
+   <h4> 🕒 ألية العمل </h4>
+<p>
+1.	يساعد على دخول الجلوكوز إلى الخلايا وخفض مستوى السكر في الدم.
+2.	يقلل إنتاج الجلوكوز من الكبد.
+3.	يغطي سكر الوجبة لأنه سريع المفعول نسبيًا مقارنة بالأنواع الأخرى.
+. <p>
+
+<h4> 🕒 💊 الاستخدامات الشائعة </h4>
+<p>  
+1.	السكري من النوع الأول (Type 1).
+2.	السكري من النوع الثاني (Type 2) عند عدم كفاية الأقراص.
+3.	تصحيح ارتفاع السكر (Correction insulin).
+4.	يستخدم في طوارئ ارتفاع السكر أو الحماض الكيتوني (DKA) عبر الوريد بجرعات محددة.
+
+	عادةً يُعطى 2–3 مرات يوميًا قبل الوجبات الرئيسية.
+	يبدأ مفعوله خلال 30 دقيقة، ويصل لذروة خلال 2–4 ساعات، ويستمر 6–8 ساعات.
+..</p>
+      <h4>⚠️ الآثار الجانبية الشائعة </h4>
+<p> 
+	الشائعة:
+1.	هبوط سكر الدم (Hypoglycemia)
+2.	زيادة الوزن
+3.	ألم أو احمرار في موضع الحقن
+
+	الأقل شيوعًا:
+1.	تورّم خفيف
+2.	تكتلات دهنية (Lipodystrophy)
+3.	حساسية نادرة جدًا للإنسولين
+..</p> 
+
+      <h4>️⚕️ تحذيرات </h4>
+<p> 
+	تغيير مواقع الحقن باستمرار لتجنب التكتلات.
+	الحذر مع مرضى الكلى أو الكبد لضبط الجرعة.
+	الانتباه لأعراض هبوط السكر:
+رجفة – عرق – جوع – دوخة – نبض سريع
+	يجب ضبط الجرعات عند: المرض/ النشاط البدني العالي/ تغيّر نمط الأكل
+
+	عدم استخدام الإنسولين إذا تغيّر لونه أو أصبح عكرًا (Regular يجب أن يكون صافياً شفافاً).
+.</p>
+      <h4> طريقة استخدام الإنسولين </h4>
+<p>
+	التحضير قبل الحقن
+1.	اغسل يديك جيدًا.
+2.	تأكد أن الإنسولين ليس منتهي الصلاحية.
+3.	تأكد من شكله
+	اختيار مكان الحقن
+أفضل الأماكن: البطن (الأسرع امتصاصًا) / الفخذين / الذراع العلوي / الأرداف.
+	ملاحظة مهمة:
+بدّل  مكان الحقن كل مرة لتجنب تكتل الدهون تحت الجلد (Lipodystrophy).
+	خطوات الحقن باستخدام السرنجة (Vial + Syringe)
+1. اسحب من الهواء مقدار نفس الجرعة المطلوبة.
+2. أدخل الهواء في القارورة.
+3. اقلب  القارورة واسحب الجرعة المطلوبة.
+4. تخلص من الفقاعات الهوائية بالطرق الخفيف.
+5. اختار مكان الحقن وادخل الإبرة بزاوية 90°.
+6. احقن الجرعة ببطء ثم اسحب الإبرة.
+	بعد الحقن
+لا تقوم بتدليك مكان الحقن..</p>
+      <h4>️ 📦 التخزين </h4>
+<p>
+	قبل الفتح:
+يُحفظ في الثلاجة 2–8°C، بعيدًا عن التجميد.
+	بعد الفتح (قلم/قارورة):
+يُحفظ في درجة الغرفة لمدة 28–30 يومًا كحد أقصى.
+	يُبعد عن الحرارة المباشرة وأشعة الشمس.
+	لا يُجمَّد أبدًا..</p>
+   `},
+  
+   { name:"NPH Insulin", img:"https://i.ibb.co/qY6qznTR/121969599-3197754213684075-1525594270401904602-n.png", type:"injections", 
+   uses:"انسولين متوسط المفعول", 
+   short:" يحقن عادة مرة أو مرتين يوميًا." ,
+   details:`💉 NPH Insulin
+   <h4> 🕒 ألية العمل </h4>
+<p>
+1.	يحتوي على protamine الذي يبطّئ امتصاص الإنسولين.
+2.	يعطي مفعولًا متوسطًا لتوفير إنسولين قاعدي مستمر لتغطية سكر الدم خلال اليوم والليل.
+	يبدأ العمل: 1–2 ساعة
+الذروة: 4–8 ساعات
+المدة: 12–18 ساعة
+. <p>
+<h4> 🕒 💊 الاستخدامات الشائعة </h4>
+<p>  
+1.	علاج داء السكري النوع الأول.
+2.	علاج النوع الثاني عند عدم كفاية الأقراص.
+3.	يستخدم عادة كإنسولين قاعدي (Basal).
+4.	يُستخدم أحيانًا في الحمل إذا احتاجت المريضة إنسولين طويل المفعول.
+...</p>
+      <h4>⚠️ الآثار الجانبية الشائعة </h4>
+<p> 
+	شائعة:
+1.	انخفاض السكر (Hypoglycemia) خصوصًا في وقت الذروة.
+2.	زيادة الوزن.
+3.	احمرار أو ألم في موقع الحقن.
+4.	نوبات جوع ورعشة بسبب الانخفاض.
+	نادرة:
+1.	حساسية للإنسولين أو البروتامين.
+2.	تورم الأطراف.
+3.	تغيرات بسيطة في البصر عند بدء العلاج.
+..</p> 
+      <h4>️⚕️ تحذيرات </h4>
+<p> 
+	الحذر الشديد عند: كبار السن / مرضى الكلى أو الكبد / من لديهم خطر هبوط السكر.
+1.	خطر انخفاض السكر أكبر من اللانتوس (Glargine) بسبب الذروة.
+2.	يجب تغيير مواقع الحقن لتجنب تكتلات الدهون.
+3.	الذين لديهم نمط أكل غير منتظم
+4.	لا يستخدم لعلاج الحماض الكيتوني (DKA).
+.</p>
+     <h4> طريقة استخدام الإنسولين </h4>
+<p>
+	التحضير قبل الحقن
+1.	اغسل يديك جيدًا.
+2.	تأكد أن الإنسولين ليس منتهي الصلاحية.
+3.	تأكد من شكله
+	اختيار مكان الحقن
+أفضل الأماكن: البطن (الأسرع امتصاصًا) / الفخذين / الذراع العلوي / الأرداف.
+	ملاحظة مهمة:
+بدّل  مكان الحقن كل مرة لتجنب تكتل الدهون تحت الجلد (Lipodystrophy).
+	خطوات الحقن باستخدام السرنجة (Vial + Syringe)
+1. اسحب من الهواء مقدار نفس الجرعة المطلوبة.
+2. أدخل  الهواء في القارورة.
+3. اقلب  القارورة واسحب الجرعة المطلوبة.
+4. تخلص من الفقاعات الهوائية بالطرق الخفيف.
+5. اختار مكان الحقن وادخل الإبرة بزاوية 90°.
+6. احقن الجرعة ببطء ثم اسحب الإبرة.
+	بعد الحقن
+لا تقوم بتدليك مكان الحقن..</p>
+      <h4>️ 📦 التخزين </h4>
+<p>
+	قبل الفتح:
+يُحفظ في الثلاجة 2–8°C، بعيدًا عن التجميد.
+	بعد الفتح (قلم/قارورة):
+يُحفظ في درجة الغرفة لمدة 28–30 يومًا كحد أقصى.
+	يُبعد عن الحرارة المباشرة وأشعة الشمس.
+	لا يُجمَّد أبدًا.
+	يُرج جيدًا قبل الاستخدام لأنه معلق cloudy وليس صافياً كالأنسولينات الأخرى.
+	.</p>
+   `},
+   
+  { name:"Mixtard 30/70 أو Insulin Human 30/70", img:"https://i.ibb.co/CsKz70xk/Whats-App-Image-2025-11-23-at-12-06-05-PM.png", 
+   type:"injections", 
+   uses:"إنسولين متوسط", 
+   short:"التركيبة: 30% Insulin Regular سريع المفعول + 70% NPH طويل المفعول - يُحقن قبل الوجبة بـ 30 دقيقة." ,
+   details:`💉 Mixtard 30/70 أو Insulin Human 30/70
+   <h4> 🕒 ألية العمل </h4>
+<p>
+	الجزء السريع (Regular 30%):
+يخفض السكر بعد الوجبة عبر تسهيل دخول الجلوكوز للخلايا.
+	الجزء المتوسط (NPH 70%):
+يعطي تغطية ممتدة لعدة ساعات ويحافظ على سكر الدم بين الوجبات وخلال الليل. <p>
+<h4> 🕒 💊 الاستخدامات الشائعة </h4>
+<p>  
+4.	علاج داء السكري النوع الأول.
+5.	علاج داء السكري النوع الثاني عند عدم سيطرة السكر على الأقراص فقط.
+6.	مناسب للمرضى الذين يحتاجون لمزيج يغطي وجبة الطعام والبازال (الأساس اليومي) بنفس الوقت...</p>
+     <h4>⚠️ الآثار الجانبية الشائعة </h4>
+<p> 
+	الأكثر شيوعًا:
+4.	هبوط سكر الدم (Hypoglycemia)
+5.	زيادة الوزن
+6.	احمرار أو ألم مكان الحقن
+
+	أقل شيوعًا:
+
+4.	تكتلات دهنية مكان الحقن (Lipodystrophy)
+5.	تورم بسيط أو احتباس سوائل
+6.	رد فعل تحسسي نادر..</p> 
+      <h4>️⚕️ تحذيرات </h4>
+<p> 
+	الحذر الشديد عند: كبار السن / مرضى الكلى أو الكبد / من لديهم خطر هبوط السكر.
+لا يُستخدم إذا لاحظتِ:
+5.	تغيّر لون الإنسولين
+6.	وجود تكتلات
+7.	يجب تبديل أماكن الحقن لتجنب تكتل الدهون.
+8.	تجنّب القيادة أو تشغيل الآلات عند الشعور بعلامات هبوط السكر.
+.</p>
+      <h4> طريقة استخدام الإنسولين </h4>
+<p>
+	التحضير قبل الحقن
+1.اغسل يديك جيدًا.
+2.تأكد أن الإنسولين ليس منتهي الصلاحية.
+3.تأكد من شكله
+	اختيار مكان الحقن
+أفضل الأماكن: البطن (الأسرع امتصاصًا) / الفخذين / الذراع العلوي / الأرداف.
+	ملاحظة مهمة:
+بدّل  مكان الحقن كل مرة لتجنب تكتل الدهون تحت الجلد (Lipodystrophy).
+	خطوات الحقن باستخدام السرنجة (Vial + Syringe)
+1. اسحب من الهواء مقدار نفس الجرعة المطلوبة.
+2. أدخل الهواء في القارورة.
+3. اقلب  القارورة واسحب الجرعة المطلوبة.
+4. تخلص من الفقاعات الهوائية بالطرق الخفيف.
+5. اختار مكان الحقن وادخل الإبرة بزاوية 90°.
+6. احقن الجرعة ببطء ثم اسحب الإبرة.
+	بعد الحقن
+لا تقوم بتدليك مكان الحقن..</p>
+      <h4>️ 📦 التخزين </h4>
+<p>
+	قبل الفتح:
+يُحفظ في الثلاجة 2–8°C، بعيدًا عن التجميد.
+	بعد الفتح (قلم/قارورة):
+يُحفظ في درجة الغرفة لمدة 28–30 يومًا كحد أقصى.
+	يُبعد عن الحرارة المباشرة وأشعة الشمس.
+	لا يُجمَّد أبدًا..</p>
+   `}
 
 ];
 
-// =========================
-// الأدوية الافتراضية: من قائمتك
-// =========================
-const defaultMedicines = normalizeMeds(medicines);
+// الأدوية الافتراضية من قائمتك
+const defaultMedicines = ensureMedIds(normalizeMeds(medicines));
 
-// ---------- Helpers ----------
+// تحميل البيانات (إن لم توجد)
 function loadData() {
   const raw = localStorage.getItem(LS_KEY);
   if (!raw) {
@@ -498,6 +896,8 @@ function loadData() {
   try {
     const parsed = JSON.parse(raw);
     if (!parsed.categories || !parsed.medicines) throw new Error("Bad schema");
+    // تأكد أن كل دواء لديه id
+    parsed.medicines = ensureMedIds(parsed.medicines);
     return parsed;
   } catch {
     const fallback = { categories: defaultCategories, medicines: defaultMedicines };
@@ -505,24 +905,17 @@ function loadData() {
     return fallback;
   }
 }
-function saveData(data){ localStorage.setItem(LS_KEY, JSON.stringify(data)); }
-function isAdmin(){ return sessionStorage.getItem(LS_ADMIN) === "1"; }
-function slugify(str) {
-  return (str || "")
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40) || ("cat-" + Math.random().toString(16).slice(2, 8));
-}
 
-// ---------- State ----------
+// =========================
+// State
+// =========================
 let data = loadData();
 let currentCategoryId = data.categories[0]?.id || "diabetes";
 let currentMedicine = null;
 
-// ---------- DOM ----------
+// =========================
+// DOM
+// =========================
 const categoriesWrap = document.getElementById("categories");
 const gallery = document.getElementById("gallery");
 const searchInput = document.getElementById("search");
@@ -550,24 +943,68 @@ const adminLoginMsg = document.getElementById("adminLoginMsg");
 
 const adminPanelModal = document.getElementById("adminPanelModal");
 const adminPanelClose = document.getElementById("adminPanelClose");
+
 // Tabs
 const tabBtns = Array.from(document.querySelectorAll(".tab-btn"));
 const tabPanels = Array.from(document.querySelectorAll(".tab-panel"));
 
-// Inline new category when adding medicine
+// Add category tab
+const newCatName = document.getElementById("newCatName");
+const newCatIcon = document.getElementById("newCatIcon");
+const addCategoryBtn = document.getElementById("addCategoryBtn");
+const catMsg = document.getElementById("catMsg");
+
+// Add medicine tab
 const existingCatBox = document.getElementById("existingCatBox");
 const newCatBox = document.getElementById("newCatBox");
 const inlineCatName = document.getElementById("inlineCatName");
 const inlineCatIcon = document.getElementById("inlineCatIcon");
 const catModeRadios = Array.from(document.querySelectorAll('input[name="catMode"]'));
+
+const medCategory = document.getElementById("medCategory");
+const medName = document.getElementById("medName");
+const medImg = document.getElementById("medImg");
+const medImgFile = document.getElementById("medImgFile");
+const medUses = document.getElementById("medUses");
+const medShort = document.getElementById("medShort");
+const medDetails = document.getElementById("medDetails");
+const addMedicineBtn = document.getElementById("addMedicineBtn");
+const medMsg = document.getElementById("medMsg");
+
+// Data tab
+const exportBtn = document.getElementById("exportBtn");
+const importBtn = document.getElementById("importBtn");
+const resetBtn = document.getElementById("resetBtn");
+const jsonArea = document.getElementById("jsonArea");
+const dataMsg = document.getElementById("dataMsg");
+
+// Edit medicine modal
+const editMedModal = document.getElementById("editMedModal");
+const editMedClose = document.getElementById("editMedClose");
+const editMedId = document.getElementById("editMedId");
+const editMedCategory = document.getElementById("editMedCategory");
+const editMedName = document.getElementById("editMedName");
+const editMedImg = document.getElementById("editMedImg");
+const editMedImgFile = document.getElementById("editMedImgFile");
+const editMedUses = document.getElementById("editMedUses");
+const editMedShort = document.getElementById("editMedShort");
+const editMedDetails = document.getElementById("editMedDetails");
+const editMedSaveBtn = document.getElementById("editMedSaveBtn");
+const editMedDeleteBtn = document.getElementById("editMedDeleteBtn");
+const editMedMsg = document.getElementById("editMedMsg");
+
+// =========================
+// Tabs
+// =========================
 function openAdminTab(tabId){
   tabBtns.forEach(b => b.classList.toggle("active", b.dataset.tab === tabId));
   tabPanels.forEach(p => p.classList.toggle("active", p.id === tabId));
 }
-
 tabBtns.forEach(btn=>{
   btn.addEventListener("click", ()=> openAdminTab(btn.dataset.tab));
-}); 
+});
+
+// existing/new category UI
 function syncCatModeUI(){
   const mode = (catModeRadios.find(r => r.checked)?.value) || "existing";
   existingCatBox.style.display = (mode === "existing") ? "block" : "none";
@@ -575,37 +1012,49 @@ function syncCatModeUI(){
 }
 catModeRadios.forEach(r => r.addEventListener("change", syncCatModeUI));
 
-const newCatName = document.getElementById("newCatName");
-const newCatIcon = document.getElementById("newCatIcon");
-const addCategoryBtn = document.getElementById("addCategoryBtn");
-const catMsg = document.getElementById("catMsg");
-
-const medCategory = document.getElementById("medCategory");
-const medName = document.getElementById("medName");
-const medImg = document.getElementById("medImg");
-const medUses = document.getElementById("medUses");
-const medShort = document.getElementById("medShort");
-const medDetails = document.getElementById("medDetails");
-const addMedicineBtn = document.getElementById("addMedicineBtn");
-const medMsg = document.getElementById("medMsg");
-
-const exportBtn = document.getElementById("exportBtn");
-const importBtn = document.getElementById("importBtn");
-const resetBtn = document.getElementById("resetBtn");
-const jsonArea = document.getElementById("jsonArea");
-const dataMsg = document.getElementById("dataMsg");
-
-// ---------- Rendering: Categories Cards ----------
+// =========================
+// Render categories (with Drag&Drop for admin)
+// =========================
 function renderCategories(){
   categoriesWrap.innerHTML = "";
-  data.categories.forEach(cat => {
+  const admin = isAdmin();
+
+  data.categories.forEach((cat, idx) => {
     const card = document.createElement("div");
-    card.className = "category-card" + (cat.id === currentCategoryId ? " active" : "");
+    card.className = "category-card" + (cat.id === currentCategoryId ? " active" : "") + (admin ? " admin-draggable" : "");
+
     card.innerHTML = `
       <span class="icon">${cat.icon || "📁"}</span>
       <div class="name">${cat.name}</div>
     `;
+
     card.onclick = () => showCategory(cat.id);
+
+    if (admin){
+      card.setAttribute("draggable", "true");
+      card.dataset.index = String(idx);
+
+      card.addEventListener("dragstart", (e)=>{
+        e.dataTransfer.setData("text/plain", String(idx));
+      });
+      card.addEventListener("dragover", (e)=> e.preventDefault());
+      card.addEventListener("drop", (e)=>{
+        e.preventDefault();
+        const from = Number(e.dataTransfer.getData("text/plain"));
+        const to = Number(card.dataset.index);
+        if (Number.isNaN(from) || Number.isNaN(to) || from === to) return;
+
+        const arr = [...data.categories];
+        const [moved] = arr.splice(from, 1);
+        arr.splice(to, 0, moved);
+
+        data.categories = arr;
+        saveData(data);
+        renderCategories();
+        fillCategorySelect();
+      });
+    }
+
     categoriesWrap.appendChild(card);
   });
 }
@@ -615,7 +1064,9 @@ function setCategoryTitle(){
   currentCategoryTitle.textContent = cat ? `الأدوية – ${cat.name}` : "الأدوية";
 }
 
-// ---------- Rendering: Medicines ----------
+// =========================
+// Render medicines
+// =========================
 function renderMedicines(list){
   gallery.innerHTML = "";
   if (!list.length){
@@ -645,15 +1096,41 @@ function showCategory(categoryId){
   renderMedicines(list);
 }
 
-// ---------- Modals ----------
+// =========================
+// Modals
+// =========================
 function openModal(med){
   currentMedicine = med;
   modalImg.src = med.img;
   modalName.textContent = med.name;
   modalUses.innerHTML = (med.short || med.uses || "").replace(/\n/g,"<br>");
   modal.style.display = "flex";
+
+  // Admin buttons inside modal
+  let adminRow = modal.querySelector(".modal-admin-row");
+  if (adminRow) adminRow.remove();
+
+  if (isAdmin()){
+    adminRow = document.createElement("div");
+    adminRow.className = "modal-admin-row";
+    adminRow.innerHTML = `
+      <button class="edit" id="modalEditBtn">✏️ تعديل</button>
+      <button class="del"  id="modalDeleteBtn">🗑️ حذف</button>
+    `;
+    modal.querySelector(".modal-content").appendChild(adminRow);
+
+    document.getElementById("modalEditBtn").onclick = ()=>{
+      closeModal();
+      openEditModal(med.id);
+    };
+    document.getElementById("modalDeleteBtn").onclick = ()=>{
+      closeModal();
+      deleteMedicineById(med.id);
+    };
+  }
 }
 function closeModal(){ modal.style.display = "none"; }
+
 function openMore(){
   moreText.innerHTML = (currentMedicine?.details || "—");
   modal.style.display = "none";
@@ -666,7 +1143,9 @@ window.closeModal = closeModal;
 window.openMore = openMore;
 window.closeMore = closeMore;
 
-// ---------- Search داخل القسم الحالي ----------
+// =========================
+// Search in current category
+// =========================
 searchInput.addEventListener("input", ()=>{
   const term = searchInput.value.toLowerCase().trim();
   const result = data.medicines.filter(m =>
@@ -683,18 +1162,23 @@ clearBtn.addEventListener("click", ()=>{
   showCategory(currentCategoryId);
 });
 
+// close on outside click
 window.addEventListener("click", (e)=>{
   if (e.target === modal) closeModal();
   if (e.target === moreModal) closeMore();
   if (e.target === adminLoginModal) adminLoginModal.style.display = "none";
   if (e.target === adminPanelModal) adminPanelModal.style.display = "none";
+  if (e.target === editMedModal) closeEditModal();
 });
 
-// ---------- Admin ----------
+// =========================
+// Admin: login / logout / panel
+// =========================
 function refreshAdminUI(){
   const ok = isAdmin();
   adminPanelBtn.style.display = ok ? "inline-flex" : "none";
   adminLogoutBtn.style.display = ok ? "inline-flex" : "none";
+  renderCategories(); // لتفعيل drag للأدمن
 }
 
 adminLoginBtn.addEventListener("click", ()=>{
@@ -721,6 +1205,7 @@ adminLogoutBtn.addEventListener("click", ()=>{
   adminPanelModal.style.display = "none";
 });
 
+// fill selects
 function fillCategorySelect(){
   medCategory.innerHTML = "";
   data.categories.forEach(c=>{
@@ -728,6 +1213,15 @@ function fillCategorySelect(){
     opt.value = c.id;
     opt.textContent = `${c.icon ? c.icon + " " : ""}${c.name}`;
     medCategory.appendChild(opt);
+  });
+}
+function fillEditCategorySelect(){
+  editMedCategory.innerHTML = "";
+  data.categories.forEach(c=>{
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = `${c.icon ? c.icon + " " : ""}${c.name}`;
+    editMedCategory.appendChild(opt);
   });
 }
 
@@ -740,17 +1234,18 @@ adminPanelBtn.addEventListener("click", ()=>{
 
   fillCategorySelect();
   syncCatModeUI();
-
-  // افتحي تبويب إضافة الدواء افتراضيًا
   openAdminTab("tab-meds");
 
   adminPanelModal.style.display = "flex";
 });
 adminPanelClose.addEventListener("click", ()=> adminPanelModal.style.display = "none");
 
-// Add category
+// =========================
+// Add category (tab)
+// =========================
 addCategoryBtn.addEventListener("click", ()=>{
   if (!isAdmin()) return;
+
   const name = newCatName.value.trim();
   const icon = newCatIcon.value.trim();
   if (!name){ catMsg.textContent = "❗ اكتب اسم القسم"; return; }
@@ -760,6 +1255,7 @@ addCategoryBtn.addEventListener("click", ()=>{
     catMsg.textContent = "❗ هذا القسم موجود بالفعل";
     return;
   }
+
   data.categories.push({ id, name, icon });
   saveData(data);
 
@@ -771,58 +1267,62 @@ addCategoryBtn.addEventListener("click", ()=>{
   fillCategorySelect();
 });
 
-// Add medicine
-addMedicineBtn.addEventListener("click", ()=>{
+// =========================
+// Add medicine (tab) with existing/new category + upload image
+// =========================
+addMedicineBtn.addEventListener("click", async ()=>{
   if (!isAdmin()) return;
 
   const mode = (catModeRadios.find(r => r.checked)?.value) || "existing";
 
-  // 1) تحديد القسم
+  // category
   let categoryId = medCategory.value;
 
-  // إذا المستخدم اختار "قسم جديد"
   if (mode === "new"){
-    const name = inlineCatName.value.trim();
-    const icon = inlineCatIcon.value.trim();
-
-    if (!name){
+    const cname = inlineCatName.value.trim();
+    const cicon = inlineCatIcon.value.trim();
+    if (!cname){
       medMsg.textContent = "❗ اكتب اسم القسم الجديد أولاً";
       return;
     }
-
-    const id = slugify(name);
-
-    // إذا غير موجود: أضفه
-    if (!data.categories.some(c => c.id === id)){
-      data.categories.push({ id, name, icon });
+    const cid = slugify(cname);
+    if (!data.categories.some(c => c.id === cid)){
+      data.categories.push({ id: cid, name: cname, icon: cicon });
     }
-
-    categoryId = id;
+    categoryId = cid;
   }
 
-  // 2) بيانات الدواء
+  // medicine fields
   const name = medName.value.trim();
-  const img = medImg.value.trim();
+  let img = medImg.value.trim();
+  const file = medImgFile.files?.[0];
+
+  if (file){
+    try { img = await readImageAsDataURL(file); }
+    catch { medMsg.textContent = "❌ فشل قراءة الصورة"; return; }
+  }
+
   const uses = medUses.value.trim();
   const short = medShort.value.trim();
   const details = medDetails.value.trim();
 
   if (!categoryId || !name || !img){
-    medMsg.textContent = "❗ مطلوب: القسم + اسم الدواء + رابط الصورة";
+    medMsg.textContent = "❗ مطلوب: القسم + اسم الدواء + (رابط صورة أو صورة مرفوعة)";
     return;
   }
 
-  data.medicines.unshift({ categoryId, name, img, uses, short, details: details || "—" });
+  const id = (crypto?.randomUUID ? crypto.randomUUID() : ("m_" + Math.random().toString(16).slice(2)));
+  data.medicines.unshift({ id, categoryId, name, img, uses, short, details: details || "—" });
   saveData(data);
 
-  // تنظيف الحقول
+  // clear fields
   medName.value = "";
   medImg.value = "";
+  medImgFile.value = "";
   medUses.value = "";
   medShort.value = "";
   medDetails.value = "";
 
-  // تنظيف حقول القسم الجديد إذا استخدمها
   if (mode === "new"){
     inlineCatName.value = "";
     inlineCatIcon.value = "";
@@ -830,45 +1330,141 @@ addMedicineBtn.addEventListener("click", ()=>{
 
   medMsg.textContent = "✅ تم إضافة الدواء";
 
-  // تحديث واجهة الأقسام + القائمة المنسدلة
   renderCategories();
   fillCategorySelect();
-
-  // افتح القسم الذي أُضيف إليه الدواء
   showCategory(categoryId);
 });
-// Export/Import/Reset
+
+// =========================
+// Data: Export / Import / Reset
+// =========================
 exportBtn.addEventListener("click", ()=>{
   if (!isAdmin()) return;
   jsonArea.value = JSON.stringify(data, null, 2);
   dataMsg.textContent = "✅ تم تجهيز JSON للتصدير";
 });
+
 importBtn.addEventListener("click", ()=>{
   if (!isAdmin()) return;
   try{
     const parsed = JSON.parse(jsonArea.value);
     if (!parsed.categories || !parsed.medicines) throw new Error("schema");
+    parsed.medicines = ensureMedIds(parsed.medicines);
     data = parsed;
     saveData(data);
     renderCategories();
-    showCategory(data.categories[0]?.id || "diabetes");
     fillCategorySelect();
+    showCategory(data.categories[0]?.id || "diabetes");
     dataMsg.textContent = "✅ تم الاستيراد بنجاح";
   } catch {
     dataMsg.textContent = "❌ JSON غير صالح";
   }
 });
+
 resetBtn.addEventListener("click", ()=>{
   if (!isAdmin()) return;
   data = { categories: defaultCategories, medicines: defaultMedicines };
   saveData(data);
   renderCategories();
-  showCategory("diabetes");
   fillCategorySelect();
+  showCategory("diabetes");
   dataMsg.textContent = "✅ تم إعادة الضبط";
 });
 
-// ---------- Init ----------
+// =========================
+// Edit / Delete Medicine
+// =========================
+function findMedById(id){
+  return data.medicines.find(m => m.id === id);
+}
+
+function openEditModal(medId){
+  if (!isAdmin()) return;
+  const med = findMedById(medId);
+  if (!med) return;
+
+  fillEditCategorySelect();
+  editMedMsg.textContent = "";
+  editMedId.value = med.id;
+  editMedCategory.value = med.categoryId || "diabetes";
+  editMedName.value = med.name || "";
+  editMedImg.value = (typeof med.img === "string" && med.img.startsWith("data:")) ? "" : (med.img || "");
+  editMedUses.value = med.uses || "";
+  editMedShort.value = med.short || "";
+  editMedDetails.value = med.details || "";
+  editMedImgFile.value = "";
+
+  editMedModal.style.display = "flex";
+}
+
+function closeEditModal(){
+  editMedModal.style.display = "none";
+}
+
+async function saveEditMedicine(){
+  if (!isAdmin()) return;
+
+  const id = editMedId.value;
+  const med = findMedById(id);
+  if (!med) return;
+
+  const name = editMedName.value.trim();
+  if (!name){
+    editMedMsg.textContent = "❗ اسم الدواء مطلوب";
+    return;
+  }
+
+  let imgVal = editMedImg.value.trim();
+  const file = editMedImgFile.files?.[0];
+  if (file){
+    try{ imgVal = await readImageAsDataURL(file); }
+    catch { editMedMsg.textContent = "❌ فشل قراءة الصورة"; return; }
+  }
+
+  if (!imgVal){
+    editMedMsg.textContent = "❗ ضع رابط صورة أو ارفع صورة";
+    return;
+  }
+
+  med.categoryId = editMedCategory.value;
+  med.name = name;
+  med.img = imgVal;
+  med.uses = editMedUses.value.trim();
+  med.short = editMedShort.value.trim();
+  med.details = editMedDetails.value.trim() || "—";
+
+  saveData(data);
+  renderCategories();
+  fillCategorySelect();
+  showCategory(med.categoryId);
+  editMedMsg.textContent = "✅ تم الحفظ";
+}
+
+function deleteMedicineById(id){
+  if (!isAdmin()) return;
+
+  const med = findMedById(id);
+  if (!med) return;
+
+  const ok = confirm(`هل تريد حذف الدواء: ${med.name} ؟`);
+  if (!ok) return;
+
+  data.medicines = data.medicines.filter(m => m.id !== id);
+  saveData(data);
+  showCategory(currentCategoryId);
+}
+
+editMedClose.addEventListener("click", closeEditModal);
+editMedSaveBtn.addEventListener("click", saveEditMedicine);
+editMedDeleteBtn.addEventListener("click", ()=>{
+  const id = editMedId.value;
+  closeEditModal();
+  deleteMedicineById(id);
+});
+
+// =========================
+// Init
+// =========================
 renderCategories();
 setCategoryTitle();
 showCategory(currentCategoryId);
