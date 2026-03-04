@@ -1427,7 +1427,7 @@ adminPanelBtn.addEventListener("click", ()=>{
     alert("الدخول للأدمن فقط.");
     return;
   }
-  adminModal.style.display = "flex";
+  adminPanelModal.style.display = "flex";
   fillCategorySelect();
 
   renderCategoryManager();   // أضيفي هذا السطر
