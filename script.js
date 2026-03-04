@@ -1,3 +1,22 @@
+/* =========================
+   إعدادات وبيانات افتراضية
+========================= */
+
+// كلمة مرور الإدارة (تنبيه: ظاهرة بالكود)
+const ADMIN_PASSWORD = "radmin123";
+
+// مفاتيح التخزين
+const LS_KEY = "bidhya_meds_v1";
+const LS_ADMIN = "bidhya_admin_logged_in";
+
+// أقسام افتراضية (بدل tablets/injections فقط)
+const defaultCategories = [
+  { id: "tablets", name: "الحبوب", icon: "💊" },
+  { id: "injections", name: "الحقن", icon: "💉" }
+];
+
+// أدوية افتراضية: نفس بياناتك الحالية لكن type => categoryId
+// (تم نقلها كما هي تقريبًا للحفاظ على نفس القوالب)
 const medicines = [
   { name:"METFORMIN 500 mg", img:"https://i.ibb.co/Gf0NsZJN/glucophage.jpg", type:"tablets", uses:"لعلاج السكري من النوع الثاني ",
   short: "يوخذ بعد الأكل-الجرعة القصوى: 2000–2550 mg في اليوم", 
@@ -821,77 +840,358 @@ const medicines = [
    `}
 ];
 
-// العناصر
-let currentCategory = "tablets";
+/* =========================
+   تحميل/حفظ البيانات
+========================= */
+
+function loadData() {
+  const raw = localStorage.getItem(LS_KEY);
+  if (!raw) {
+    const initial = { categories: defaultCategories, medicines: defaultMedicines };
+    localStorage.setItem(LS_KEY, JSON.stringify(initial));
+    return initial;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed.categories || !parsed.medicines) throw new Error("Bad schema");
+    return parsed;
+  } catch {
+    const fallback = { categories: defaultCategories, medicines: defaultMedicines };
+    localStorage.setItem(LS_KEY, JSON.stringify(fallback));
+    return fallback;
+  }
+}
+
+function saveData(data) {
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+}
+
+function isAdmin() {
+  return sessionStorage.getItem(LS_ADMIN) === "1";
+}
+
+/* =========================
+   عناصر الواجهة
+========================= */
+
+let data = loadData();
+let currentCategoryId = data.categories[0]?.id || "tablets";
 let currentMedicine = null;
 
+const categoryButtons = document.getElementById("categoryButtons");
 const gallery = document.getElementById("gallery");
 const searchInput = document.getElementById("search");
 const clearBtn = document.getElementById("clearSearch");
+
 const modal = document.getElementById("modal");
 const modalImg = document.getElementById("modal-img");
 const modalName = document.getElementById("modal-name");
 const modalUses = document.getElementById("modal-uses");
+
 const moreModal = document.getElementById("moreModal");
 const moreText = document.getElementById("more-text");
 
-function showCategory(type){
-  currentCategory = type;
-  searchInput.value = "";
-  renderMedicines(medicines.filter(m => m.type === type));
+/* Admin UI */
+const adminLoginBtn = document.getElementById("adminLoginBtn");
+const adminPanelBtn = document.getElementById("adminPanelBtn");
+const adminLogoutBtn = document.getElementById("adminLogoutBtn");
+
+const adminLoginModal = document.getElementById("adminLoginModal");
+const adminLoginClose = document.getElementById("adminLoginClose");
+const adminPassword = document.getElementById("adminPassword");
+const adminLoginSubmit = document.getElementById("adminLoginSubmit");
+const adminLoginMsg = document.getElementById("adminLoginMsg");
+
+const adminPanelModal = document.getElementById("adminPanelModal");
+const adminPanelClose = document.getElementById("adminPanelClose");
+
+const newCatName = document.getElementById("newCatName");
+const newCatIcon = document.getElementById("newCatIcon");
+const addCategoryBtn = document.getElementById("addCategoryBtn");
+const catMsg = document.getElementById("catMsg");
+
+const medCategory = document.getElementById("medCategory");
+const medName = document.getElementById("medName");
+const medImg = document.getElementById("medImg");
+const medUses = document.getElementById("medUses");
+const medShort = document.getElementById("medShort");
+const medDetails = document.getElementById("medDetails");
+const addMedicineBtn = document.getElementById("addMedicineBtn");
+const medMsg = document.getElementById("medMsg");
+
+const exportBtn = document.getElementById("exportBtn");
+const importBtn = document.getElementById("importBtn");
+const resetBtn = document.getElementById("resetBtn");
+const jsonArea = document.getElementById("jsonArea");
+const dataMsg = document.getElementById("dataMsg");
+
+/* =========================
+   توليد الأقسام + عرض البطاقات
+========================= */
+
+function renderCategoryButtons() {
+  categoryButtons.innerHTML = "";
+  data.categories.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.textContent = `${cat.icon ? cat.icon + " " : ""}${cat.name}`;
+    btn.onclick = () => showCategory(cat.id);
+    categoryButtons.appendChild(btn);
+  });
 }
 
-function renderMedicines(list){
+function showCategory(categoryId) {
+  currentCategoryId = categoryId;
+  searchInput.value = "";
+  const list = data.medicines.filter(m => m.categoryId === categoryId);
+  renderMedicines(list);
+  highlightActiveCategoryButton();
+}
+
+function highlightActiveCategoryButton() {
+  const buttons = Array.from(categoryButtons.querySelectorAll("button"));
+  const idx = data.categories.findIndex(c => c.id === currentCategoryId);
+  buttons.forEach((b, i) => b.classList.toggle("active", i === idx));
+}
+
+function renderMedicines(list) {
   gallery.innerHTML = "";
   list.forEach(med => {
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
-      <img src="${med.img}">
+      <img src="${med.img}" alt="${med.name}">
       <h4>${med.name}</h4>
-      <p>${med.uses}</p>
+      <p>${med.uses || ""}</p>
     `;
     card.onclick = () => openModal(med);
     gallery.appendChild(card);
   });
 }
 
-function openModal(med){
+function openModal(med) {
   currentMedicine = med;
   modalImg.src = med.img;
   modalName.textContent = med.name;
-  modalUses.innerHTML = med.short ? med.short.replace(/\n/g, "<br>") : med.uses;
-  modal.style.display = 'flex';
+  modalUses.innerHTML = (med.short ? med.short : (med.uses || "")).replace(/\n/g, "<br>");
+  modal.style.display = "flex";
 }
 
+function closeModal() { modal.style.display = "none"; }
 
-function closeModal(){ modal.style.display = "none"; }
-
-function openMore(){
-  moreText.innerHTML = currentMedicine.details.replace(/\n/g, "<br>");
+function openMore() {
+  moreText.innerHTML = (currentMedicine?.details || "").replace(/\n/g, "<br>");
   modal.style.display = "none";
   moreModal.style.display = "flex";
 }
 
-function closeMore(){ moreModal.style.display = "none"; }
+function closeMore() { moreModal.style.display = "none"; }
 
+/* =========================
+   البحث
+========================= */
 searchInput.addEventListener("input", () => {
-  const term = searchInput.value.toLowerCase();
-  const result = medicines.filter(m =>
-    m.type === currentCategory &&
-    (m.name.toLowerCase().includes(term) || m.uses.toLowerCase().includes(term))
+  const term = searchInput.value.toLowerCase().trim();
+  const result = data.medicines.filter(m =>
+    m.categoryId === currentCategoryId &&
+    (
+      (m.name || "").toLowerCase().includes(term) ||
+      (m.uses || "").toLowerCase().includes(term)
+    )
   );
   renderMedicines(result);
 });
 
 clearBtn.addEventListener("click", () => {
   searchInput.value = "";
-  showCategory(currentCategory);
+  showCategory(currentCategoryId);
 });
 
-window.onclick = e => {
+window.onclick = (e) => {
   if (e.target === modal) closeModal();
   if (e.target === moreModal) closeMore();
+  if (e.target === adminLoginModal) adminLoginModal.style.display = "none";
+  if (e.target === adminPanelModal) adminPanelModal.style.display = "none";
 };
 
-showCategory("tablets");
+/* =========================
+   الإدارة: دخول/خروج ولوحة تحكم
+========================= */
+
+function refreshAdminUI() {
+  const ok = isAdmin();
+  adminPanelBtn.style.display = ok ? "inline-flex" : "none";
+  adminLogoutBtn.style.display = ok ? "inline-flex" : "none";
+}
+
+adminLoginBtn.addEventListener("click", () => {
+  adminLoginMsg.textContent = "";
+  adminPassword.value = "";
+  adminLoginModal.style.display = "flex";
+  adminPassword.focus();
+});
+
+adminLoginClose.addEventListener("click", () => {
+  adminLoginModal.style.display = "none";
+});
+
+adminLoginSubmit.addEventListener("click", () => {
+  const pass = adminPassword.value;
+  if (pass === ADMIN_PASSWORD) {
+    sessionStorage.setItem(LS_ADMIN, "1");
+    adminLoginModal.style.display = "none";
+    refreshAdminUI();
+  } else {
+    adminLoginMsg.textContent = "❌ كلمة المرور غير صحيحة";
+  }
+});
+
+adminLogoutBtn.addEventListener("click", () => {
+  sessionStorage.removeItem(LS_ADMIN);
+  refreshAdminUI();
+  adminPanelModal.style.display = "none";
+});
+
+adminPanelBtn.addEventListener("click", () => {
+  if (!isAdmin()) return;
+  catMsg.textContent = "";
+  medMsg.textContent = "";
+  dataMsg.textContent = "";
+  fillCategorySelect();
+  adminPanelModal.style.display = "flex";
+});
+
+adminPanelClose.addEventListener("click", () => {
+  adminPanelModal.style.display = "none";
+});
+
+function fillCategorySelect() {
+  medCategory.innerHTML = "";
+  data.categories.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = `${c.icon ? c.icon + " " : ""}${c.name}`;
+    medCategory.appendChild(opt);
+  });
+}
+
+/* إضافة قسم */
+function slugify(str) {
+  return (str || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40) || ("cat-" + Math.random().toString(16).slice(2, 8));
+}
+
+addCategoryBtn.addEventListener("click", () => {
+  if (!isAdmin()) return;
+
+  const name = newCatName.value.trim();
+  const icon = newCatIcon.value.trim();
+
+  if (!name) {
+    catMsg.textContent = "❗ اكتب اسم القسم";
+    return;
+  }
+
+  const id = slugify(name);
+  if (data.categories.some(c => c.id === id)) {
+    catMsg.textContent = "❗ هذا القسم موجود بالفعل (جرّب اسم مختلف)";
+    return;
+  }
+
+  data.categories.push({ id, name, icon });
+  saveData(data);
+
+  newCatName.value = "";
+  newCatIcon.value = "";
+  catMsg.textContent = "✅ تم إضافة القسم";
+
+  // تحديث الواجهة
+  renderCategoryButtons();
+  fillCategorySelect();
+});
+
+/* إضافة دواء */
+addMedicineBtn.addEventListener("click", () => {
+  if (!isAdmin()) return;
+
+  const categoryId = medCategory.value;
+  const name = medName.value.trim();
+  const img = medImg.value.trim();
+  const uses = medUses.value.trim();
+  const short = medShort.value.trim();
+  const details = medDetails.value.trim();
+
+  if (!categoryId || !name || !img) {
+    medMsg.textContent = "❗ مطلوب: القسم + اسم الدواء + رابط الصورة";
+    return;
+  }
+
+  data.medicines.unshift({
+    categoryId,
+    name,
+    img,
+    uses,
+    short,
+    details: details || "<p>—</p>"
+  });
+
+  saveData(data);
+
+  // تنظيف الحقول
+  medName.value = "";
+  medImg.value = "";
+  medUses.value = "";
+  medShort.value = "";
+  medDetails.value = "";
+
+  medMsg.textContent = "✅ تم إضافة الدواء";
+
+  // عرض تلقائي إذا نفس القسم الحالي
+  if (currentCategoryId === categoryId) {
+    showCategory(currentCategoryId);
+  }
+});
+
+/* تصدير/استيراد/إعادة ضبط */
+exportBtn.addEventListener("click", () => {
+  if (!isAdmin()) return;
+  jsonArea.value = JSON.stringify(data, null, 2);
+  dataMsg.textContent = "✅ تم تجهيز JSON للتصدير (انسخه واحفظه)";
+});
+
+importBtn.addEventListener("click", () => {
+  if (!isAdmin()) return;
+  try {
+    const parsed = JSON.parse(jsonArea.value);
+    if (!parsed.categories || !parsed.medicines) throw new Error("schema");
+    data = parsed;
+    saveData(data);
+    renderCategoryButtons();
+    fillCategorySelect();
+    showCategory(data.categories[0]?.id || "tablets");
+    dataMsg.textContent = "✅ تم الاستيراد بنجاح";
+  } catch {
+    dataMsg.textContent = "❌ JSON غير صالح";
+  }
+});
+
+resetBtn.addEventListener("click", () => {
+  if (!isAdmin()) return;
+  data = { categories: defaultCategories, medicines: defaultMedicines };
+  saveData(data);
+  renderCategoryButtons();
+  fillCategorySelect();
+  showCategory("tablets");
+  dataMsg.textContent = "✅ تم إعادة الضبط للبيانات الافتراضية";
+});
+
+/* =========================
+   تشغيل أولي
+========================= */
+renderCategoryButtons();
+refreshAdminUI();
+showCategory(currentCategoryId);
