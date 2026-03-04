@@ -411,3 +411,38 @@ footer {
 .section-block{
   grid-column: 1 / -1;
 }
+.diabetes-chooser{
+  grid-column:1 / -1;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:20px;
+}
+
+.chooser-card{
+  background:#fff;
+  border-radius:16px;
+  padding:25px;
+  text-align:center;
+  cursor:pointer;
+  box-shadow:0 5px 15px rgba(0,0,0,0.15);
+  transition:0.3s;
+}
+
+.chooser-card:hover{
+  transform:translateY(-5px);
+}
+
+.chooser-card .ic{
+  font-size:34px;
+  margin-bottom:10px;
+}
+
+.chooser-card .nm{
+  font-size:18px;
+  color:#0d47a1;
+}
+
+.chooser-card .ds{
+  font-size:0.9em;
+  color:#666;
+}
