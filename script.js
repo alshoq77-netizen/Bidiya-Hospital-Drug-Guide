@@ -1122,15 +1122,38 @@ function renderDiabetesCombined(){
   renderSection("💊 الحبوب", tablets);
   renderSection("💉 الحقن", injections);
 }
+// ===== عرض خيار الحبوب والحقن داخل قسم السكري =====
+function renderDiabetesChooser(){
+  gallery.innerHTML = "";
+
+  gallery.innerHTML = `
+    <div class="diabetes-chooser">
+      <div class="chooser-card" id="chooseTablets">
+        <div class="ic">💊</div>
+        <div class="nm">الحبوب</div>
+        <div class="ds">عرض أدوية السكري (أقراص)</div>
+      </div>
+
+      <div class="chooser-card" id="chooseInjections">
+        <div class="ic">💉</div>
+        <div class="nm">الحقن</div>
+        <div class="ds">عرض أدوية السكري (إنسولين)</div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("chooseTablets").onclick = ()=> showCategory("tablets");
+  document.getElementById("chooseInjections").onclick = ()=> showCategory("injections");
+}
 function showCategory(categoryId){
   currentCategoryId = categoryId;
   searchInput.value = "";
   setCategoryTitle();
   renderCategories();
 
-  // ✅ إذا ضغط على "أدوية السكري" اعرض (الحبوب + الحقن) داخلها
+  // إذا ضغط المستخدم على قسم السكري
   if (categoryId === "diabetes"){
-    renderDiabetesCombined();
+    renderDiabetesChooser();
     return;
   }
 
