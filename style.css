@@ -446,3 +446,40 @@ footer {
   font-size:0.9em;
   color:#666;
 }
+.cat-row{
+  display:grid;
+  grid-template-columns: 1fr 140px;
+  gap:10px;
+  padding:10px;
+  border-radius:12px;
+  background:#fff;
+  border:1px solid rgba(25,118,210,0.12);
+  margin-bottom:10px;
+}
+.cat-row .left{
+  display:grid;
+  grid-template-columns: 1fr 110px;
+  gap:10px;
+}
+.cat-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+.cat-actions button{
+  padding:8px 10px;
+  border-radius:10px;
+}
+.cat-actions .save{ background:#e8f3ff; color:#0d47a1; }
+.cat-actions .del{ background:#f44336; color:#fff; }
+.cat-actions .del[disabled]{ opacity:.5; cursor:not-allowed; }
+.cat-move{
+  grid-column: 1 / -1;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.cat-move select{ width:auto; min-width:200px; }
