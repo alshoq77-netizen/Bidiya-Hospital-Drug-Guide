@@ -1013,19 +1013,19 @@ function syncCatModeUI(){
 catModeRadios.forEach(r => r.addEventListener("change", syncCatModeUI));
 
 // =========================
+// =========================
 // Render categories (with Drag&Drop for admin)
 // =========================
 function renderCategories(){
   categoriesWrap.innerHTML = "";
   const admin = isAdmin();
 
-  // ❗ نخفي الحبوب والحقن من الصفحة الرئيسية
+  // ✅ إخفاء الحبوب والحقن من الصفحة الرئيسية (تظهر فقط داخل السكري)
   const visibleCategories = data.categories.filter(
     c => c.id !== "tablets" && c.id !== "injections"
   );
 
   visibleCategories.forEach((cat, idx) => {
-
     const card = document.createElement("div");
 
     card.className =
@@ -1040,21 +1040,32 @@ function renderCategories(){
 
     card.onclick = () => showCategory(cat.id);
 
-    categoriesWrap.appendChild(card);
-  });
-}
+    // ✅ Drag & Drop فقط للأدمن
+    if (admin){
+      card.setAttribute("draggable", "true");
+      card.dataset.index = String(idx);
+
+      card.addEventListener("dragstart", (e)=>{
+        e.dataTransfer.setData("text/plain", card.dataset.index);
+      });
+
       card.addEventListener("dragover", (e)=> e.preventDefault());
+
       card.addEventListener("drop", (e)=>{
         e.preventDefault();
         const from = Number(e.dataTransfer.getData("text/plain"));
         const to = Number(card.dataset.index);
         if (Number.isNaN(from) || Number.isNaN(to) || from === to) return;
 
-        const arr = [...data.categories];
-        const [moved] = arr.splice(from, 1);
-        arr.splice(to, 0, moved);
+        // نرتّب فقط الأقسام الظاهرة
+        const visible = [...visibleCategories];
+        const [moved] = visible.splice(from, 1);
+        visible.splice(to, 0, moved);
 
-        data.categories = arr;
+        // نرجع نركّبها داخل data.categories بدون لمس الحبوب/الحقن (مخفية)
+        const hidden = data.categories.filter(c => c.id === "tablets" || c.id === "injections");
+        data.categories = [...visible, ...hidden];
+
         saveData(data);
         renderCategories();
         fillCategorySelect();
@@ -1064,7 +1075,6 @@ function renderCategories(){
     categoriesWrap.appendChild(card);
   });
 }
-
 function setCategoryTitle(){
   const cat = data.categories.find(c => c.id === currentCategoryId);
   currentCategoryTitle.textContent = cat ? `الأدوية – ${cat.name}` : "الأدوية";
