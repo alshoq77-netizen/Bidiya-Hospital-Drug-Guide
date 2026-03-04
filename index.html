@@ -20,21 +20,20 @@
   </div>
 </header>
 
-<h2 class="section-title">أقسام الأدوية</h2>
-<div id="categories"></div>
-
-<div class="toolbar">
-  <h2 class="section-title small" id="currentCategoryTitle">الأدوية</h2>
+<main class="wrap">
+  <h2 class="page-title">أقسام الأدوية</h2>
+  <div id="categories" class="categories-grid"></div>
 
   <div class="search-box">
-    <input type="text" id="search" placeholder="ابحث داخل القسم الحالي...">
+    <input type="text" id="search" placeholder="ابحث عن اسم الدواء..." />
     <button id="clearSearch" title="مسح">❌</button>
   </div>
-</div>
 
-<div id="gallery"></div>
+  <h3 id="currentCategoryTitle" class="current-title"></h3>
+  <div id="gallery"></div>
+</main>
 
-<!-- Modal: basic -->
+<!-- نافذة التفاصيل الأساسية -->
 <div id="modal">
   <div class="modal-content">
     <span class="close" onclick="closeModal()">&times;</span>
@@ -45,7 +44,7 @@
   </div>
 </div>
 
-<!-- Modal: more -->
+<!-- نافذة التفاصيل الكاملة -->
 <div id="moreModal">
   <div class="more-content">
     <span class="close" onclick="closeMore()">&times;</span>
@@ -53,7 +52,7 @@
   </div>
 </div>
 
-<!-- Admin Login -->
+<!-- نافذة تسجيل دخول الإدارة -->
 <div id="adminLoginModal" class="admin-modal">
   <div class="admin-modal-content">
     <span class="close" id="adminLoginClose">&times;</span>
@@ -65,56 +64,47 @@
   </div>
 </div>
 
-<!-- Admin Panel -->
+<!-- لوحة التحكم (Tabs) -->
 <div id="adminPanelModal" class="admin-modal">
   <div class="admin-modal-content wide">
     <span class="close" id="adminPanelClose">&times;</span>
     <h3>لوحة التحكم</h3>
 
-    <!-- Tabs -->
-    <div class="admin-tabs">
-      <button class="tab-btn active" data-tab="tab-meds">➕ إضافة دواء</button>
-      <button class="tab-btn" data-tab="tab-cats">📁 إضافة قسم</button>
-      <button class="tab-btn" data-tab="tab-data">🧹 إدارة البيانات</button>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-meds">💊 إضافة/تعديل دواء</button>
+      <button class="tab-btn" data-tab="tab-cats">🗂️ إدارة الأقسام</button>
+      <button class="tab-btn" data-tab="tab-data">📦 إدارة البيانات</button>
     </div>
 
-    <div class="admin-tab-panels">
-
-      <!-- TAB: Add Medicine -->
-      <div class="tab-panel active" id="tab-meds">
-        <div class="admin-card">
+    <!-- TAB: meds -->
+    <div id="tab-meds" class="tab-panel active">
+      <div class="admin-grid">
+        <div class="admin-card full">
           <h4>➕ إضافة دواء جديد</h4>
 
-          <label>القسم</label>
-          <div class="choice-row">
-            <label class="choice">
-              <input type="radio" name="catMode" value="existing" checked>
-              قسم موجود
-            </label>
-            <label class="choice">
-              <input type="radio" name="catMode" value="new">
-              قسم جديد
-            </label>
+          <div class="radio-row">
+            <label><input type="radio" name="catMode" value="existing" checked> قسم موجود</label>
+            <label><input type="radio" name="catMode" value="new"> قسم جديد</label>
           </div>
 
           <div id="existingCatBox">
+            <label>اختر القسم</label>
             <select id="medCategory"></select>
           </div>
 
           <div id="newCatBox" style="display:none;">
-            <input type="text" id="inlineCatName" placeholder="اسم القسم الجديد (مثال: أدوية الربو)" />
-            <input type="text" id="inlineCatIcon" placeholder="أيقونة (اختياري) مثال: 🫁 أو ❤️" />
+            <label>اسم القسم الجديد</label>
+            <input type="text" id="inlineCatName" placeholder="مثال: أدوية الربو" />
+            <label>أيقونة (اختياري)</label>
+            <input type="text" id="inlineCatIcon" placeholder="مثال: 🫁 أو ❤️" />
           </div>
 
           <label>اسم الدواء</label>
           <input type="text" id="medName" placeholder="مثال: Salbutamol Inhaler" />
 
-          <label>الصورة</label>
-          <input type="url" id="medImg" placeholder="رابط الصورة (اختياري إذا رفعت صورة)" />
-          <div class="file-row">
-            <input type="file" id="medImgFile" accept="image/*" />
-            <div class="hint2">✅ إذا اخترتِ ملف صورة، سيتم استخدامه بدل الرابط</div>
-          </div>
+          <label>رابط الصورة (أو اختر ملف)</label>
+          <input type="url" id="medImg" placeholder="https://..." />
+          <input type="file" id="medImgFile" accept="image/*" />
 
           <label>وصف مختصر (يظهر على البطاقة)</label>
           <input type="text" id="medUses" placeholder="مثال: موسع للشعب الهوائية..." />
@@ -127,18 +117,17 @@
 
           <button id="addMedicineBtn" class="primary">إضافة الدواء</button>
           <div id="medMsg" class="msg"></div>
+
+          <p class="mini-hint">✳️ لتعديل أي دواء: ادخلي أي قسم ثم اضغطي على بطاقة الدواء (وأنتِ Admin) سيفتح تعديل/حذف.</p>
         </div>
       </div>
+    </div>
 
-      <!-- TAB: Add Category -->
-      <div class="tab-panel" id="tab-cats">
+    <!-- TAB: cats -->
+    <div id="tab-cats" class="tab-panel">
+      <div class="admin-grid">
         <div class="admin-card">
           <h4>➕ إضافة قسم جديد</h4>
-          <div class="admin-card" style="margin-top:12px;">
-  <h4>✏️ تعديل / حذف الأقسام</h4>
-  <div id="catsList"></div>
-  <div class="hint2">ملاحظة: عند حذف قسم سيتم نقل أدويته إلى قسم تختارينه.</div>
-</div>
           <label>اسم القسم</label>
           <input type="text" id="newCatName" placeholder="مثال: أدوية القلب" />
           <label>أيقونة (اختياري)</label>
@@ -146,64 +135,62 @@
           <button id="addCategoryBtn" class="primary">إضافة القسم</button>
           <div id="catMsg" class="msg"></div>
         </div>
-      </div>
 
-      <!-- TAB: Data -->
-      <div class="tab-panel" id="tab-data">
         <div class="admin-card">
-          <h4>🧹 إدارة البيانات</h4>
-          <div class="row">
-            <button id="exportBtn">⬇️ تصدير JSON</button>
-            <button id="importBtn">⬆️ استيراد JSON</button>
-            <button id="resetBtn" class="danger">♻️ إعادة ضبط</button>
-          </div>
-          <textarea id="jsonArea" rows="10" placeholder="هنا سيظهر JSON للتصدير أو ضع JSON للاستيراد"></textarea>
-          <div id="dataMsg" class="msg"></div>
+          <h4>✏️ إدارة الأقسام (تعديل/حذف)</h4>
+          <div id="catsList" class="cats-list"></div>
+          <p class="mini-hint">ملاحظة: لا يمكن حذف أقسام النظام الأساسية (السكري/الحبوب/الحقن).</p>
         </div>
       </div>
-
     </div>
+
+    <!-- TAB: data -->
+    <div id="tab-data" class="tab-panel">
+      <div class="admin-card full">
+        <h4>📦 إدارة البيانات</h4>
+        <div class="row">
+          <button id="exportBtn">⬇️ تصدير JSON</button>
+          <button id="importBtn">⬆️ استيراد JSON</button>
+          <button id="resetBtn" class="danger">♻️ إعادة ضبط</button>
+        </div>
+        <textarea id="jsonArea" rows="8" placeholder="هنا سيظهر JSON للتصدير أو ضع JSON للاستيراد"></textarea>
+        <div id="dataMsg" class="msg"></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<!-- Edit Medicine Modal -->
+<!-- تعديل دواء -->
 <div id="editMedModal" class="admin-modal">
-  <div class="admin-modal-content wide">
+  <div class="admin-modal-content">
     <span class="close" id="editMedClose">&times;</span>
     <h3>تعديل الدواء</h3>
 
-    <div class="admin-card">
-      <input type="hidden" id="editMedId" />
+    <input type="hidden" id="editMedId" />
 
-      <label>القسم</label>
-      <select id="editMedCategory"></select>
+    <label>القسم</label>
+    <select id="editMedCategory"></select>
 
-      <label>اسم الدواء</label>
-      <input type="text" id="editMedName" />
+    <label>اسم الدواء</label>
+    <input type="text" id="editMedName" />
 
-      <label>الصورة</label>
-      <input type="url" id="editMedImg" placeholder="رابط الصورة (اختياري إذا رفعت صورة)" />
-      <div class="file-row">
-        <input type="file" id="editMedImgFile" accept="image/*" />
-        <div class="hint2">✅ إذا اخترتِ ملف صورة، سيتم استخدامه بدل الرابط</div>
-      </div>
+    <label>رابط الصورة (أو اختر ملف)</label>
+    <input type="url" id="editMedImg" placeholder="https://..." />
+    <input type="file" id="editMedImgFile" accept="image/*" />
 
-      <label>وصف مختصر (يظهر على البطاقة)</label>
-      <input type="text" id="editMedUses" />
+    <label>وصف مختصر (يظهر على البطاقة)</label>
+    <input type="text" id="editMedUses" />
 
-      <label>الوصف القصير (داخل النافذة الأولى)</label>
-      <textarea id="editMedShort" rows="3"></textarea>
+    <label>الوصف القصير</label>
+    <textarea id="editMedShort" rows="3"></textarea>
 
-      <label>التفاصيل الكاملة (HTML مسموح)</label>
-      <textarea id="editMedDetails" rows="8"></textarea>
+    <label>التفاصيل الكاملة (HTML)</label>
+    <textarea id="editMedDetails" rows="8"></textarea>
 
-      <div class="row">
-        <button id="editMedSaveBtn" class="primary">💾 حفظ التعديل</button>
-        <button id="editMedDeleteBtn" class="danger">🗑️ حذف الدواء</button>
-      </div>
-
-      <div id="editMedMsg" class="msg"></div>
-    </div>
+    <button id="editMedSaveBtn" class="primary">حفظ التعديل</button>
+    <button id="editMedDeleteBtn" class="danger" style="width:100%; margin-top:10px;">حذف الدواء</button>
+    <div id="editMedMsg" class="msg"></div>
   </div>
 </div>
 
