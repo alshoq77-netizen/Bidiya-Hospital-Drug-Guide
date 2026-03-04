@@ -1019,9 +1019,19 @@ function renderCategories(){
   categoriesWrap.innerHTML = "";
   const admin = isAdmin();
 
-  data.categories.forEach((cat, idx) => {
+  // ❗ نخفي الحبوب والحقن من الصفحة الرئيسية
+  const visibleCategories = data.categories.filter(
+    c => c.id !== "tablets" && c.id !== "injections"
+  );
+
+  visibleCategories.forEach((cat, idx) => {
+
     const card = document.createElement("div");
-    card.className = "category-card" + (cat.id === currentCategoryId ? " active" : "") + (admin ? " admin-draggable" : "");
+
+    card.className =
+      "category-card" +
+      (cat.id === currentCategoryId ? " active" : "") +
+      (admin ? " admin-draggable" : "");
 
     card.innerHTML = `
       <span class="icon">${cat.icon || "📁"}</span>
@@ -1030,13 +1040,9 @@ function renderCategories(){
 
     card.onclick = () => showCategory(cat.id);
 
-    if (admin){
-      card.setAttribute("draggable", "true");
-      card.dataset.index = String(idx);
-
-      card.addEventListener("dragstart", (e)=>{
-        e.dataTransfer.setData("text/plain", String(idx));
-      });
+    categoriesWrap.appendChild(card);
+  });
+}
       card.addEventListener("dragover", (e)=> e.preventDefault());
       card.addEventListener("drop", (e)=>{
         e.preventDefault();
